@@ -58,8 +58,8 @@ export class InvoiceService {
       const client = new TextractClient({
         region: "us-east-1",
         credentials: {
-          accessKeyId: "AKIAW7M2MTNLK7SFWECU",
-          secretAccessKey: "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"
+          accessKeyId: process.env.ACCESS_KEY_ID,
+          secretAccessKey: process.env.SECRET_ACCESS_KEY
         }
       });
   
