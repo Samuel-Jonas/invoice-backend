@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, UseFilters } from '@nestjs/common';
 import { InvoiceService } from './invoice.service';
-import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { PutObjectCommandOutput } from '@aws-sdk/client-s3';
+import { AnalyzeDocumentResponse } from '@aws-sdk/client-textract'
 
 @Controller('invoice')
 export class InvoiceController {
@@ -9,27 +10,27 @@ export class InvoiceController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  create(@UploadedFile() file: Express.Multer.File) {
-    console.log(file);
-  }
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
 
-  @Get()
-  findAll() {
-    return this.invoiceService.findAll();
-  }
+    try {
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.invoiceService.findOne(+id);
-  }
+      const uploadedFile: PutObjectCommandOutput =  await this.invoiceService.uploadFile(file);
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateInvoiceDto: UpdateInvoiceDto) {
-    return this.invoiceService.update(+id, updateInvoiceDto);
-  }
+      if (uploadedFile.$metadata.httpStatusCode == 200) {
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.invoiceService.remove(+id);
+        const fileTexted: AnalyzeDocumentResponse = await this.invoiceService.textract_file_text(file);
+
+        await this.invoiceService.saveInvoice(fileTexted.Blocks);
+
+      } else {
+        return {statusCode: 400, timestamp: new Date().toISOString(), path: "/invoice/upload", error: "não foi possível salvar o arquivo"}
+      }
+
+      return {statusCode: 201, timestamp: new Date().toISOString(), path: "/invoice/upload", error: null}
+
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
   }
 }
