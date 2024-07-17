@@ -85,9 +85,9 @@ export class InvoiceService {
     }
   }
 
-  async saveInvoice(fileBlocks: Block[]) {
+  async saveInvoice(fileBlocks: Block[], userId: string) {
     try {
-      let invoices: Omit<Invoice, 'id'>[] =  this.extractBlocksToSave(fileBlocks);
+      let invoices: Omit<Invoice, 'id'>[] = this.extractBlocksToSave(fileBlocks, userId);
       console.log(invoices);
       await this.createInvoice(invoices);
     } catch(err) {
@@ -96,7 +96,7 @@ export class InvoiceService {
     }
   }
 
-  private extractBlocksToSave(fileBlocks: Block[]): Omit<Invoice, 'id'>[] {
+  private extractBlocksToSave(fileBlocks: Block[], userId: string): Omit<Invoice, 'id'>[] {
     try {
       let table: string[][] = [];
 
@@ -180,7 +180,7 @@ export class InvoiceService {
           description: descriptionProps,
           price: new Decimal(priceProps),
           total: new Decimal(totalProps),
-          userId: 1,
+          userId: userId,
           createdAt: new Date()};
   
         invoices.push(invoice);
